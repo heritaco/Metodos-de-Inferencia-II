@@ -1,0 +1,302 @@
+---
+title: "Tarea III"
+author: "Heriberto Espino"
+date: "2024-10-22"
+output:     
+  html_document:
+    theme: darkly
+    highlight: breezedark
+---
+
+Se usan funciones nativas de r y se comparan los resultados con el procedimiento :) 
+
+# Ejercicio 1
+
+Un administrador de un hospital sospecha que el retraso en el pago de las facturas
+hospitalarias ha aumentado de un año a otro. Según los registros del hospital, encontró
+que durante abril de 2017, 34 de 1001 personas tuvieron un retraso en los pagos de más
+de 90 días. En abril de 2018, las estadísticas fueron de 49 de 1283. ¿Hay evidencia para
+pensar que ha habido un aumento en la tasa de morosidad en los pagos que superan
+los 90 días?
+
+$H_0:p_{2017} > p_{2018}$ vs $H_a:p_{2017} \leq p_{2018}$
+
+**Hipotesis nula:** La tasa de morosidad en 2017 es mayor o igual que en 2018 vs
+**Hipótesis alternativa:** La tasa de morosidad en 2018 ha aumentado en comparación con 2017).
+
+
+```{r ejercicio 1, comment=NA}
+# Datos
+n_2017 <- 1001  
+n_2018 <- 1283
+
+x_2017 <- 34
+x_2018 <- 49
+
+# Proporciones observadas
+p_2017 <- x_2017 / n_2017
+p_2018 <- x_2018 / n_2018
+
+# Proporción combinada
+p_0 <- (x_2017 + x_2018) / (n_2017 + n_2018)
+
+(prop.test(c(x_2017, x_2018), c(n_2017, n_2018), alternative = "less", correct = FALSE))
+
+z <- (p_2017 - p_2018) / sqrt(p_0 * (1 - p_0) * (1/n_2017 + 1/n_2018))
+z
+
+p_valor <- pnorm(z, lower.tail = TRUE)
+p_valor
+```
+Dado que el $p-valor$ es 30%, que es considerablemente mayor al nivel de significancia comúnmente utilizado, como $\alpha = 5&$, no rechazamos la hipótesis nula. No hay suficiente evidencia para concluir que *la tasa de morosidad en los pagos de más de 90 días haya aumentado en 2018 en comparación con 2017*. Es probable que la tasa de morosidad se haya
+mantenido igual o incluso haya disminuido.
+
+# Ejercicio 2
+
+Un grupo de investigadores desea evaluar si la media de los niveles de
+colesterol en adultos de una ciudad es mayor a 200 mg/dL. Se selecciona una
+muestra aleatoria de 30 adultos con los siguientes niveles de colesterol
+(en mg/dL):
+
+Realiza una prueba con un nivel de significancia del 5% para determinar si la
+media de los niveles de colesterol en adultos de dicha cuidad supera los
+200 mg/dL.
+
+$H_0: \mu \leq 200$ vs $H_a: \mu > 200$ 
+
+**Hipótesis nula:** La media de los niveles de colesterol en adultos de la
+ciudad es menor o igual a 200 mg/dL vs
+**Hipótesis alternativa:** La media de los niveles de colesterol en adultos
+de la ciudad es mayor a 200 mg/dL.
+
+
+```{r ejercicio 2, comment=NA}
+# Datos
+colesterol <- c(210, 190, 205, 220, 195, 225, 200, 215, 210, 180,
+                205, 195, 210, 220, 195, 230, 205, 210, 200, 215,
+                225, 190, 210, 220, 200, 210, 205, 195, 215, 210)
+
+mu_X <- 200
+X_barra <- mean(colesterol)
+s <- sd(colesterol)
+n <- length(colesterol)
+
+(prueba_t <- t.test(colesterol, mu = mu_X, alternative = "greater"))
+
+t_observado <- (X_barra - mu_X) / (s / sqrt(n))
+t_observado
+
+p_valor <- pt(t_observado, df = n - 1, lower.tail = FALSE)
+p_valor
+```
+Dado que el $p-valor$ es 0.01% rechazamos la hipótesis nula. Hay suficiente evidencia para concluir que *la media de los niveles de colesterol en adultos de la ciudad es mayor a 200 mg/dL*.
+
+# Ejercicio 3
+
+Se seleccionan dos grupos de estudiantes, uno que estudia en la mañana y otro en la
+tarde, para medir el rendimiento académico. Las puntuaciones de los estudiantes son
+las siguientes:
+
+Grupo Mañana: 78, 85, 90, 88, 76, 82, 85, 89, 91, 80
+
+Grupo Tarde: 75, 80, 85, 83, 78, 77, 82, 84, 86, 81
+
+El director esta interesado en saber si existe una diferencia significativa de rendimientos
+entre los estudiantes de la Mañana y los de Tarde. Realice la Prueba de Hipótesis
+correspondiente.
+
+$H_0: X = Y$ vs $H_a: X \neq Y$ 
+
+```{r ejercicio 3, comment=NA, warning=FALSE}
+# Datos
+grupo_manana <- c(78, 85, 90, 88, 76, 82, 85, 89, 91, 80)
+grupo_tarde <- c(75, 80, 85, 83, 78, 77, 82, 84, 86, 81)
+
+(prueba_t <- t.test(grupo_manana, grupo_tarde, alternative = "two.sided", var.equal = FALSE))
+
+X <- grupo_manana
+Y <- grupo_tarde
+
+n_X <- length(X)
+n_Y <- length(Y)
+
+X_barra <- mean(X)
+Y_barra <- mean(Y)
+
+s2_X <- var(X)
+s2_Y <- var(Y)
+
+gamma_X <- s2_X / n_X
+gamma_Y <- s2_Y / n_Y
+
+t_observado <- (X_barra - Y_barra) / sqrt(gamma_X + gamma_Y)
+t_observado
+
+V_s <- (gamma_X + gamma_Y)^2 / ( (gamma_X^2) / (n_X - 1) + (gamma_Y^2) / (n_Y - 1) )
+V_s
+
+p_valor <- 2 * pt(-abs(t_observado), V_s)
+p_valor
+```
+Dado que el $p-valor$ es 12%, no rechazamos la hipótesis nula si se considera un nivel de significancia del 5%. Sin embargo, si se utiliza un nivel de significancia del 10%, el valor p se encuentra cerca de ese umbral. Además, cuando se aplica el método bootstrap, el valor p puede ser inferior al 10%, lo que sugiere que, bajo ciertos enfoques, se podría detectar una diferencia.
+
+# Extra 2
+
+Realiza y compara una prueba usando bootstrap para esta prueba. Muestra
+una gráfica de la distribución bootstrap del estadístico comparada con la distribución
+teórica (bajo normalidad).
+
+```{r extra 2, comment=NA, warning=FALSE}
+B <- 1000 # Número de muestras bootstrap
+
+diferencia_observada <- mean(X) - mean(Y)   # Diferencia de medias observada
+
+datos_combinados <- c(X, Y)     # Unir los grupos para hacer el remuestreo bajo la hipótesis nula
+# Generar una matriz de muestras bootstrap
+# Cada columna es una nueva muestra de los datos combinados
+muestras_bootstrap <- matrix(sample(datos_combinados, (n_X + n_Y) * B,
+                                    replace = TRUE), n_X + n_Y, B)
+
+# Dividir las muestras bootstrap en las correspondientes para X y Y
+X_bootstrap <- muestras_bootstrap[1:n_X, ]
+Y_bootstrap <- muestras_bootstrap[(n_X + 1):(n_X + n_Y), ]
+
+# Calcular las diferencias de medias de cada muestra bootstrap
+diferencias_bootstrap <- colMeans(X_bootstrap) - colMeans(Y_bootstrap)
+
+# Se usa valor absoluto porque es una prueba de dos colas
+p_valor_bootstrap <- mean(abs(diferencias_bootstrap) >= abs(diferencia_observada))
+p_valor_bootstrap
+
+media_bootstrap <- mean(diferencias_bootstrap)
+sd_bootstrap <- sd(diferencias_bootstrap)
+
+# Graficar
+library(ggplot2)
+ggplot(data.frame(diferencias_bootstrap = diferencias_bootstrap), aes(x = diferencias_bootstrap)) +
+  geom_histogram(aes(y = ..density..), bins = 30, fill = "#020652", color = "#FFFFFF", alpha = 0.9) +
+  stat_function(fun = dnorm, args = list(mean = media_bootstrap, sd = sd_bootstrap), color = "#D36674", size = 1) +
+  labs(title = "Distribucion Bootstrap vs. Distribucion Teorica",
+       x = "Diferencias de Medias",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+
+# Ejercicio 4
+
+Un fabricante de bombillas afirma que el 95 % de sus productos duran más de 1000
+horas. Para verificar esta afirmación, se selecciona una muestra de 200 bombillas y se
+encuentra que 185 duran más de 1000 horas. Realice una prueba para ver si el fabricante
+miente, obtenga el p-valor exacto y compárelo con la aproximación usando el TLC con
+y sin corrección de continuidad
+
+$H_0: \hat{p_0} \geq 0.95$ vs $H_a: \hat{p_0} \leq 0.95$ 
+
+```{r ejercicio 4, comment=NA}
+# Datos
+n <- 200
+X <- 185
+p_0 <- 0.95
+p_muestral <- X / n
+p_muestral - p_0
+```
+
+```{r ejercicio 4.1, comment=NA}
+# ------------------------------ p-valor exacto ------------------------------
+p_valor_real <- pbinom(X, n, p_0, lower.tail = TRUE)
+p_valor_real
+
+# ---------------------- Sin corrección de continuidad ---------------------- 
+p_valor_TLC <- 1 - pnorm(1.62, lower.tail = TRUE)
+p_valor_TLC
+
+# ---------------------- Con corrección de continuidad  ---------------------- 
+p_valor_correcion <- 1 - pnorm(1.45, lower.tail = TRUE)
+p_valor_correcion
+```
+
+# Ejercicio 5
+
+Un estudio mide el peso de 10 personas antes y después de un programa de ejercicio de
+6 semanas. Los pesos (en kg) antes y después son los siguientes:
+
+Busque determinar si el programa de ejercicio tiene un efecto significativo en la reducción
+del peso. Además realice alguna validación visual para corroborar el supuesto de normalidad
+que esta detrás de la prueba, si este no se cumple, haga y compare el resultado de una
+prueba bootstrap.
+
+$H_0: X = Y$ vs $H_a: X \neq Y$ 
+
+```{r ejercicio 5, comment=NA}
+# Datos
+antes <- c(88, 72, 82, 64, 72, 110, 79, 106, 72, 63, 59, 109,
+           62, 97, 78, 92, 88, 79, 60, 65, 78, 70, 66, 66, 121)
+despues <- c(83, 71, 74, 62, 88, 81, 81, 98, 64, 61, 59, 80, 68,
+             75, 96, 81, 81, 60, 57, 63, 71, 69, 68, 69, 73)
+
+
+(t.test(antes, despues, paired = TRUE, alternative = "two.sided"))
+
+diferencias <- despues - antes
+
+n <- length(diferencias)
+X_barra <- mean(diferencias)
+s <- sd(diferencias)
+
+# QQ plot
+diferencias_std <- (diferencias - X_barra) / s 
+
+# Crear un qq plot
+library(ggplot2)
+ggplot(data.frame(diferencias_std), aes(sample = diferencias_std)) +
+  stat_qq(color = "#020652", alpha = 0.9) +
+  stat_qq_line(color = "#9D95DD") +
+  labs(title = "QQ-Plot de Diferencias Estandarizadas",
+       x = "Cuantiles Teoricos",
+       y = "Cuantiles Muestrales") +
+  theme_minimal()
+
+# Crear un histograma con ggplot2
+ggplot(data.frame(diferencias_std), aes(x = diferencias_std)) +
+  geom_histogram(binwidth = 0.5, fill = "#020652", color = "#FFFFFF", alpha = 0.9) +
+  labs(title = "Histograma de Diferencias Estandarizadas",
+       x = "Diferencias Estandarizadas",
+       y = "Frecuencia") +
+  theme_minimal()
+```
+
+Con el QQ-Plot parece normal...
+
+```{r ejercicio 5.1, comment=NA}
+t_observado <- X_barra / (s / sqrt(n))
+t_observado
+
+# p-valor
+p_valor <- 2 * pt(-abs(t_observado), df = n - 1)
+p_valor
+```
+
+Aunque en el QQ-Plot parece normal, vamos a comparar el $p-valor$ obtenido con el de Bootstrap porque este no asume normalidad :)
+
+```{r ejercicio 5.2, comment=NA}
+# ---------------- Bootstrap  ---------------- 
+B <- 10000
+
+# Generamos una matriz de muestras bootstrap
+muestras_bootstrap <- matrix(sample(diferencias, n * B, replace = TRUE), n, B)
+
+# Calculamos las medias de cada muestra bootstrap
+medias_bootstrap <- colMeans(muestras_bootstrap)
+
+# Calculamos las varianzas de cada muestra bootstrap
+varianzas_bootstrap <- apply(muestras_bootstrap, 2, var)
+
+# Calculamos los estadísticos t de bootstrap
+t_bootstrap <- (medias_bootstrap - X_barra) / (sqrt(varianzas_bootstrap) / sqrt(n))
+
+# Calculamos el p-valor usando el método bootstrap
+p_valor_bootstrap <- mean(abs(t_bootstrap) >= abs(t_observado))
+p_valor_bootstrap
+```
+
