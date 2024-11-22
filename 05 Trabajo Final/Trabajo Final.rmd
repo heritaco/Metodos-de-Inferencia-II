@@ -1,0 +1,115 @@
+---
+title: "Tarea III"
+author: "Andrea Hernandez\nHeriberto Espino"
+date: "2024-10-22"
+output:     
+  html_document:
+    theme: darkly
+    highlight: breezedark
+---
+
+# 01 Análisis du Patrones de Compra
+
+Texto
+
+$H_0:p_{2017} > p_{2018}$ vs $H_a:p_{2017} \leq p_{2018}$
+
+**Hipotesis nula:** La tasa de morosidad en 2017 es mayor o igual que en 2018 vs
+**Hipótesis alternativa:** La tasa de morosidad en 2018 ha aumentado en comparación con 2017).
+
+
+```{r ejercicio 1, comment=NA, echo=False}
+
+
+
+
+```
+
+Texto
+
+
+
+# 02 Evaluacion del Rendimiento de Pruebas de Normalidad
+
+Texto
+
+$H_0: \mu \leq 200$ vs $H_a: \mu > 200$ 
+
+**Hipótesis nula:** La media de los niveles de colesterol en adultos de la
+ciudad es menor o igual a 200 mg/dL vs
+**Hipótesis alternativa:** La media de los niveles de colesterol en adultos
+de la ciudad es mayor a 200 mg/dL.
+
+
+```{r ejercicio 2, comment=NA}
+
+
+
+
+```
+
+Texto
+
+
+
+# 03 Analisis de normalidad de datos
+
+Texto
+
+$H_0: X = Y$ vs $H_a: X \neq Y$ 
+
+```{r ejercicio 3, comment=NA, warning=FALSE}
+
+
+
+```
+
+Texto
+
+
+
+# 04 Pruebas Bootstrap y Monte Carlo para Graficos QQ
+
+Texto
+
+```{r extra 2, comment=NA, warning=FALSE}
+
+
+
+
+```
+
+Texto
+
+
+
+# 05 Análisis de Emisiones de CO2
+
+Texto
+
+$H_0: \hat{p_0} \geq 0.95$ vs $H_a: \hat{p_0} \leq 0.95$ 
+
+```{r ejercicio 4, comment=NA}
+
+
+
+
+```
+
+Texto
+
+
+
+# 06 Efecto de una Dieta Especial sobre el Colesterol
+
+Texto
+
+$H_0: X = Y$ vs $H_a: X \neq Y$ 
+
+```{r ejercicio 5, comment=NA}
+
+
+
+```
+
+Texto
