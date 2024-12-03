@@ -113,3 +113,6 @@ ggplot(qq_data_lnorm, aes(x=observed, y=theoretical)) +
     geom_line(aes(y=bootstrap_bands_lnorm$upper), linetype="dashed", color="red") +
     geom_abline(intercept=0, slope=1) +
     labs(title="QQ Plot Lognormal - Bootstrap", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+
+

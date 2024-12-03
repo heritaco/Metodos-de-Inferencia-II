@@ -11,15 +11,6 @@ sample_sizes <- c(30, 120, 480)
 B <- 10000
 alpha <- 0.10
 
-# Define tests
-test_functions <- list(
-    LT = lillie.test,
-    CVMT = cvm.test,
-    AD = ad.test,
-    SFT = shapiro.test,
-    SWT = swilk.test
-)
-
 # Initialize results
 results <- list(
     H0_true = list(),
@@ -47,10 +38,20 @@ simulate_tests <- function(n, dist, test_funcs, B, alpha) {
     colMeans(rejections)
 }
 
-# Run simulations
+library(nortest)   # For lillie.test, cvm.test, ad.test
+library(stats)     # For shapiro.test
+
+# Define tests
+test_functions <- list(
+    LT = lillie.test,
+    CVMT = cvm.test,
+    AD = ad.test,
+    SFT = shapiro.test
+)
+
+# Run simulations for H0_true
 for (n in sample_sizes) {
     results$H0_true[[as.character(n)]] <- simulate_tests(n, "normal", test_functions, B, alpha)
-    results$H0_false[[as.character(n)]] <- simulate_tests(n, "t", test_functions, B, alpha)
 }
 
 # Create tables

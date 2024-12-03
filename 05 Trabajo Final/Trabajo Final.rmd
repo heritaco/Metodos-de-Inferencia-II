@@ -14,18 +14,92 @@ Texto
 
 $H_0:p_{2017} > p_{2018}$ vs $H_a:p_{2017} \leq p_{2018}$
 
-**Hipotesis nula:** La tasa de morosidad en 2017 es mayor o igual que en 2018 vs
-**Hipótesis alternativa:** La tasa de morosidad en 2018 ha aumentado en comparación con 2017).
+**Hipotesis nula:** No hay diferencia en las puntuaciones de compra entre hombres y mujeres vs
+**Hipótesis alternativa:** Los hombres tienden a comprar menos que las mujeres.
+
+Los rangos están ya para una prueba de Wilcoxon.(?)
+
+# H0: No hay diferencia en las puntuaciones de compra entre hombres y mujeres
+# H1: Los hombres tienden a comprar menos que las mujeres
 
 
 ```{r ejercicio 1, comment=NA, echo=False}
 
+# a) Calcular los valores de los rangos
+library(dplyr)
 
+# Crear el dataframe
+data <- data.frame(
+    ID = 1:45,
+    Genero = c(
+        rep(1, 25), rep(2, 20)
+    ),
+    Puntaje = c(
+        5,1,1,3,4,5,2,4,3,3,1,3,3,5,2,2,4,2,2,2,1,5,4,5,3,
+        5,4,2,3,5,2,4,5,4,2,1,5,4,4,5,3,3,4,2,1
+    ),
+    Rango = c(
+        40.5,10.5,10.5,19.5,30,40.5,10.5,30,19.5,19.5,3.5,19.5,19.5,40.5,10.5,
+        10.5,30,10.5,10.5,10.5,3.5,40.5,30,10.5,40.5,
+        19.5,40.5,30,10.5,19.5,40.5,30,3.5,40.5,30,3.5,40.5,30,30,40.5,
+        19.5,19.5,19.5,30,10.5,3.5
+    )
+)
+
+# Calcular los rangos
+data <- data %>%
+    group_by(Genero) %>%
+    mutate(Rango_calculado = rank(-Puntaje, ties.method = "average"))
+
+
+# --------------------------- Diferencia de medias --------------------
+
+# d) Prueba de hipótesis
+resultado <- t.test(Puntaje ~ Genero, data = data, alternative = "less")
+print(resultado)
+
+# e) Prueba de hipótesis manual
+
+# Separar los datos por género
+hombres <- subset(data, Genero == 1)$Puntaje
+mujeres <- subset(data, Genero == 2)$Puntaje
+
+# Calcular estadísticas descriptivas
+n1 <- length(hombres)
+n2 <- length(mujeres)
+mean1 <- mean(hombres)
+mean2 <- mean(mujeres)
+sd1 <- sd(hombres)
+sd2 <- sd(mujeres)
+
+# Calcular el estadístico t
+se <- sqrt((sd1^2 / n1) + (sd2^2 / n2))
+t_stat <- (mean1 - mean2) / se
+
+# Grados de libertad usando la aproximación de Welch
+df <- ((sd1^2 / n1) + (sd2^2 / n2))^2 / 
+    ((sd1^2 / n1)^2 / (n1 - 1) + (sd2^2 / n2)^2 / (n2 - 1))
+
+# Calcular el valor p
+p_value <- pt(t_stat, df, lower.tail = TRUE)
+
+# Imprimir resultados
+cat("t =", t_stat, "\ndf =", df, "\np-value =", p_value, "\n")
+
+
+# ----------------- yo -----------------------
+
+# Sumamos los rangos de los hombres
+
+W_x = 3.5 
 
 
 ```
 
-Texto
+Para una diferencia de medias el 
+p-value = 0.1676.
+
+No hay suficiente evidencia para confirmar que los hombres compran menos que las mujeres.
 
 
 
@@ -43,7 +117,92 @@ de la ciudad es mayor a 200 mg/dL.
 
 ```{r ejercicio 2, comment=NA}
 
+# 02.r
 
+library(nortest)
+library(moments)
+library(ggplot2)
+
+set.seed(123)
+
+# Define parameters
+sample_sizes <- c(30, 120, 480)
+B <- 10000
+alpha <- 0.10
+
+# Define tests
+test_functions <- list(
+    LT = lillie.test,
+    CVMT = cvm.test,
+    AD = ad.test,
+    SFT = shapiro.test,
+    SWT = swilk.test
+)
+
+# Initialize results
+results <- list(
+    H0_true = list(),
+    H0_false = list()
+)
+
+# Simulation function
+simulate_tests <- function(n, dist, test_funcs, B, alpha) {
+    rejections <- matrix(0, nrow = B, ncol = length(test_funcs))
+    colnames(rejections) <- names(test_funcs)
+    
+    for (i in 1:B) {
+        if (dist == "normal") {
+            data <- rnorm(n)
+        } else {
+            data <- rt(n, df = 5)
+        }
+        for (test in names(test_funcs)) {
+            test_result <- tryCatch(test_funcs[[test]](data), error = function(e) NULL)
+            if (!is.null(test_result) && test_result$p.value < alpha) {
+                rejections[i, test] <- 1
+            }
+        }
+    }
+    colMeans(rejections)
+}
+
+# Run simulations
+for (n in sample_sizes) {
+    results$H0_true[[as.character(n)]] <- simulate_tests(n, "normal", test_functions, B, alpha)
+    results$H0_false[[as.character(n)]] <- simulate_tests(n, "t", test_functions, B, alpha)
+}
+
+# Create tables
+library(knitr)
+kable(as.data.frame(results$H0_true), digits = 3, caption = "H0 True: Proportion of Rejections")
+kable(as.data.frame(results$H0_false), digits = 3, caption = "H0 False: Proportion of Rejections")
+
+# Plot p-values distribution (example for one n)
+n_example <- 30
+p_values_true <- replicate(B, {
+    data <- rnorm(n_example)
+    sapply(test_functions, function(f) f(data)$p.value)
+})
+p_values_false <- replicate(B, {
+    data <- rt(n_example, df = 5)
+    sapply(test_functions, function(f) f(data)$p.value)
+})
+
+p_df_true <- data.frame(t(p_values_true))
+p_df_true$Test <- rownames(p_df_true)
+p_df_true_melt <- reshape2::melt(p_df_true, id.vars = "Test")
+
+p_df_false <- data.frame(t(p_values_false))
+p_df_false$Test <- rownames(p_df_false)
+p_df_false_melt <- reshape2::melt(p_df_false, id.vars = "Test")
+
+ggplot(p_df_true_melt, aes(x = value, fill = Test)) +
+    geom_density(alpha = 0.5) +
+    labs(title = paste("P-Values Distribution H0 True n =", n_example), x = "P-Value")
+
+ggplot(p_df_false_melt, aes(x = value, fill = Test)) +
+    geom_density(alpha = 0.5) +
+    labs(title = paste("P-Values Distribution H0 False n =", n_example), x = "P-Value")
 
 
 ```
@@ -60,7 +219,81 @@ $H_0: X = Y$ vs $H_a: X \neq Y$
 
 ```{r ejercicio 3, comment=NA, warning=FALSE}
 
+# Cargar librerías necesarias
+library(ggplot2)
+library(stats)
+library(nortest)
 
+# Leer los datos
+datos <- read.csv("normality_test.csv", header = TRUE)
+
+# a) Visualización de la Distribución
+
+# Histograma con densidad normal estimada
+ggplot(datos, aes(x = x)) +
+    geom_histogram(aes(y = ..density..), binwidth = 1, fill = "lightblue", color = "black") +
+    stat_function(fun = dnorm, args = list(mean = mean(datos$x), sd = sd(datos$x)), color = "red") +
+    labs(title = "Histograma con Densidad Normal Estimada", x = "x", y = "Densidad") +
+    theme_minimal()
+
+# Función de Distribución Empírica (ECDF)
+ggplot(datos, aes(x = x)) +
+    stat_ecdf(geom = "step") +
+    stat_function(fun = pnorm, args = list(mean = mean(datos$x), sd = sd(datos$x)), color = "red") +
+    labs(title = "Función de Distribución Empírica vs Normal", x = "x", y = "Probabilidad Acumulada") +
+    theme_minimal()
+
+# Gráfico QQ
+ggplot(datos, aes(sample = x)) +
+    stat_qq() +
+    stat_qq_line(color = "red") +
+    labs(title = "Gráfico QQ", x = "Cuantiles Teóricos", y = "Cuantiles Muestrales") +
+    theme_minimal()
+
+# b) Partición del Espacio y Prueba de Bondad de Ajuste
+
+# Definir particiones
+cantidad_clases <- 5
+breaks <- quantile(datos$x, probs = seq(0, 1, length.out = cantidad_clases + 1))
+observados <- table(cut(datos$x, breaks = breaks, include.lowest = TRUE))
+esperados <- diff(pnorm(breaks, mean = mean(datos$x), sd = sd(datos$x))) * length(datos$x)
+
+# Prueba de chi-cuadrada
+chisq.test(observados, p = diff(pnorm(breaks, mean = mean(datos$x), sd = sd(datos$x))))
+
+# Histograma con particiones
+ggplot(datos, aes(x = x)) +
+    geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +
+    geom_vline(xintercept = breaks, color = "red", linetype = "dashed") +
+    labs(title = "Histograma con Particiones", x = "x", y = "Frecuencia") +
+    theme_minimal()
+
+# c) Pruebas de Normalidad
+
+# Prueba de Kolmogorov-Smirnov
+ks_result <- ks.test(datos$x, "pnorm", mean = mean(datos$x), sd = sd(datos$x))
+ks_result
+
+# Cálculo manual de D- y D+
+ecdf_func <- ecdf(datos$x)
+d_plus <- max(ecdf_func(datos$x) - pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)))
+d_minus <- max(pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)) - (ecdf_func(datos$x) - 1/length(datos$x)))
+d_plus
+d_minus
+
+# Gráfico de distancias
+plot(ecdf_func, main = "D+ y D- sobre la ECF", xlab = "x", ylab = "F(x)")
+curve(pnorm(x, mean = mean(datos$x), sd = sd(datos$x)), add = TRUE, col = "red")
+abline(v = datos$x[which.max(ecdf_func(datos$x) - pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)))], col = "blue", lty = 2)
+abline(v = datos$x[which.max(pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)) - (ecdf_func(datos$x) - 1/length(datos$x)))], col = "green", lty = 2)
+
+# Comparación con funciones de prueba
+lillie_result <- lillie.test(datos$x)
+shapiro_result <- shapiro.test(datos$x)
+
+ks_result
+lillie_result
+shapiro_result
 
 ```
 
@@ -72,9 +305,123 @@ Texto
 
 Texto
 
-```{r extra 2, comment=NA, warning=FALSE}
+```{r ejercicio 4, comment=NA, warning=FALSE}
 
+# Alternativa Monte Carlo y Bootstrap para Pruebas de Bondad de Ajuste en Gráficos QQ
 
+set.seed(123)
+library(ggplot2)
+
+# Parámetros
+n <- 30
+M <- 1000
+B <- 1000
+alpha <- 0.01
+
+# Funciones para generar cuantiles teóricos
+qq_theoretical <- function(data, dist = "gamma") {
+    n <- length(data)
+    sorted_data <- sort(data)
+    if (dist == "gamma") {
+        shape <- 2
+        rate <- 1
+        return(qgamma((1:n)/(n + 1), shape=shape, rate=rate))
+    } else if (dist == "lnorm") {
+        meanlog <- 0
+        sdlog <- 1
+        return(qlnorm((1:n)/(n + 1), meanlog=meanlog, sdlog=sdlog))
+    }
+}
+
+# Alternativa Monte Carlo
+monte_carlo_bands <- function(data, dist, M, alpha) {
+    n <- length(data)
+    theoretical <- qq_theoretical(data, dist)
+    mc_quantiles <- matrix(0, nrow=M, ncol=n)
+    
+    for(i in 1:M) {
+        if(dist == "gamma"){
+            sim <- rgamma(n, shape=2, rate=1)
+        } else if(dist == "lnorm"){
+            sim <- rlnorm(n, meanlog=0, sdlog=1)
+        }
+        mc_quantiles[i, ] <- sort(sim)
+    }
+    
+    lower <- apply(mc_quantiles, 2, quantile, probs=alpha/2)
+    upper <- apply(mc_quantiles, 2, quantile, probs=1 - alpha/2)
+    return(data.frame(theoretical, lower, upper))
+}
+
+# Alternativa Bootstrap
+bootstrap_bands <- function(data, dist, B, alpha) {
+    n <- length(data)
+    sorted_data <- sort(data)
+    bootstrap_quantiles <- matrix(0, nrow=B, ncol=n)
+    
+    for(i in 1:B) {
+        indices <- sample(1:n, size=n, replace=TRUE)
+        sample_data <- data[indices]
+        bootstrap_quantiles[i, ] <- sort(sample_data)
+    }
+    
+    lower <- apply(bootstrap_quantiles, 2, quantile, probs=alpha/2)
+    upper <- apply(bootstrap_quantiles, 2, quantile, probs=1 - alpha/2)
+    theoretical <- qq_theoretical(data, dist)
+    return(data.frame(theoretical, lower, upper))
+}
+
+# Simulación para Gamma
+sample_gamma <- rgamma(n, shape=2, rate=1)
+qq_data_gamma <- data.frame(
+    observed = sort(sample_gamma),
+    theoretical = qq_theoretical(sample_gamma, "gamma")
+)
+
+mc_bands_gamma <- monte_carlo_bands(sample_gamma, "gamma", M, alpha)
+bootstrap_bands_gamma <- bootstrap_bands(sample_gamma, "gamma", B, alpha)
+
+# Gráfico QQ con Monte Carlo
+ggplot(qq_data_gamma, aes(x=observed, y=theoretical)) +
+    geom_point() +
+    geom_line(aes(y=mc_bands_gamma$lower), linetype="dashed", color="blue") +
+    geom_line(aes(y=mc_bands_gamma$upper), linetype="dashed", color="blue") +
+    geom_abline(intercept=0, slope=1) +
+    labs(title="QQ Plot Gamma - Monte Carlo", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+# Gráfico QQ con Bootstrap
+ggplot(qq_data_gamma, aes(x=observed, y=theoretical)) +
+    geom_point() +
+    geom_line(aes(y=bootstrap_bands_gamma$lower), linetype="dashed", color="red") +
+    geom_line(aes(y=bootstrap_bands_gamma$upper), linetype="dashed", color="red") +
+    geom_abline(intercept=0, slope=1) +
+    labs(title="QQ Plot Gamma - Bootstrap", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+# Simulación para Lognormal
+sample_lnorm <- rlnorm(n, meanlog=0, sdlog=1)
+qq_data_lnorm <- data.frame(
+    observed = sort(sample_lnorm),
+    theoretical = qq_theoretical(sample_lnorm, "lnorm")
+)
+
+mc_bands_lnorm <- monte_carlo_bands(sample_lnorm, "lnorm", M, alpha)
+bootstrap_bands_lnorm <- bootstrap_bands(sample_lnorm, "lnorm", B, alpha)
+
+# Gráfico QQ con Monte Carlo
+ggplot(qq_data_lnorm, aes(x=observed, y=theoretical)) +
+    geom_point() +
+    geom_line(aes(y=mc_bands_lnorm$lower), linetype="dashed", color="blue") +
+    geom_line(aes(y=mc_bands_lnorm$upper), linetype="dashed", color="blue") +
+    geom_abline(intercept=0, slope=1) +
+    labs(title="QQ Plot Lognormal - Monte Carlo", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+# Gráfico QQ con Bootstrap
+ggplot(qq_data_lnorm, aes(x=observed, y=theoretical)) +
+    geom_point() +
+    geom_line(aes(y=bootstrap_bands_lnorm$lower), linetype="dashed", color="red") +
+    geom_line(aes(y=bootstrap_bands_lnorm$upper), linetype="dashed", color="red") +
+    geom_abline(intercept=0, slope=1) +
+    labs(title="QQ Plot Lognormal - Bootstrap", x="Cuantiles Observados", y="Cuantiles Teóricos")
 
 
 ```
@@ -89,10 +436,100 @@ Texto
 
 $H_0: \hat{p_0} \geq 0.95$ vs $H_a: \hat{p_0} \leq 0.95$ 
 
-```{r ejercicio 4, comment=NA}
+```{r ejercicio 5, comment=NA}
 
+# a) Filtrar los datos para incluir solo las observaciones desde 1930 en adelante
+setwd("C:/Heri/GitHub/Metodos de Inferencia II/05 Trabajo Final")
+data <- read.csv("CO2-emissions.csv", stringsAsFactors = FALSE)
+data_filtered <- subset(data, Year >= 1930)
 
+rank_function <- function(list1, list2) {
+  
+  combined <- c(list1, list2)
+  sorted_combined <- sort(combined)
+  
+  sorted_list1 <- sort(list1)
+  sorted_list2 <- sort(list2)
+  
+  matrix1 <- data.frame(Value = sorted_list1, Type = "x", stringsAsFactors = FALSE)
+  matrix2 <- data.frame(Value = sorted_list2, Type = "y", stringsAsFactors = FALSE)
+  
+  matrix <- rbind(matrix1, matrix2)
+  matrix <- matrix[order(matrix$Value), ]
+  
+  sorted_matrix <- matrix
+  sorted_matrix$Rank <- 1:nrow(sorted_matrix)
+  
+  sorted_matrix$Count <- ifelse(sorted_matrix$Type == "x", 
+                                sapply(1:nrow(sorted_matrix), function(i) sum(sorted_matrix$Type[1:(i-1)] == "y" & sorted_matrix$Value[1:(i-1)] < sorted_matrix$Value[i])), 
+                                0)
+  
+  cat("Value\tType\tRank\tCount\n")
+  apply(sorted_matrix, 1, function(row) {
+    cat(paste(row["Value"], row["Type"], row["Rank"], row["Count"], sep = "\t"), "\n")
+  })
+  
+  sum_ranks <- sum(sorted_matrix$Rank[sorted_matrix$Type == "x"])
+  sum_counts <- sum(sorted_matrix$Count[sorted_matrix$Type != "-"])
+  
+  cat("\nsum_ranks list1 > list2 =", sum_ranks, "\n")
+  cat("sum_counts =", sum_counts, "\n")
 
+  return(sum_counts)
+} 
+
+# Wilcoxon Rank Sum Test
+
+usa <- data_filtered$USA
+usa
+
+canada <- data_filtered$Canada
+canada
+
+rank_function(usa, canada)
+
+sum_ranks <- rank_function(usa, canada)
+sum_ranks
+
+n1 <- length(usa)
+n1
+
+n2 <- length(canada)
+n2
+
+m_U <- n1 * n2 / 2
+m_U
+
+sigma_U <- sqrt(n1 * n2 * (n1 + n2 + 1) / 12)
+
+z <- (sum_ranks - mu_U) / sigma_U
+z
+
+p_value <- 1 - pnorm(z)
+p_value
+
+# e) Comparar con wilcox.test
+wilcox.test(usa, canada, alternative = "greater")
+# Comentario: Comparar z y p_value con wilcox_result$statistic y wilcox_result$p.value
+
+# f) Prueba t para diferencia de medias
+t.test(usa, canada, alternative = "greater", var.equal = FALSE)
+# Verificar supuestos: normalidad y homogeneidad de varianzas
+# Si no se cumplen, comparar con Mann-Whitney y t Bootstrap
+
+# g) Prueba t de manera manual
+mean_usa <- mean(usa)
+mean_canada <- mean(canada)
+var_usa <- var(usa)
+var_canada <- var(canada)
+t_stat <- (mean_usa - mean_canada) / sqrt(var_usa/n1 + var_canada/n2)
+df <- (var_usa/n1 + var_canada/n2)^2 / ((var_usa^2)/(n1^2*(n1-1)) + (var_canada^2)/(n2^2*(n2-1)))
+p_manual <- 1 - pt(t_stat, df)
+
+# Resultado
+t_stat
+df
+p_manual
 
 ```
 
@@ -106,9 +543,32 @@ Texto
 
 $H_0: X = Y$ vs $H_a: X \neq Y$ 
 
-```{r ejercicio 5, comment=NA}
+```{r ejercicio 6, comment=NA}
 
+# Datos
+sujeto <- 1:18
+antes <- c(6.42, 6.76, 6.56, 4.80, 8.43, 7.49, 8.05, 5.05, 5.77, 3.91, 6.77, 6.44, 6.17, 7.67, 7.34, 6.85, 5.13, 5.73)
+despues4 <- c(5.83, 6.20, 5.83, 4.27, 7.71, 7.12, 7.25, 4.63, 5.31, 3.70, 6.15, 5.59, 5.56, 7.11, 6.84, 6.40, 4.52, 5.13)
 
+# Prueba no paramétrica adecuada: Prueba de signos
+signs <- antes - despues4
+positivo <- sum(signs > 0)
+negativo <- sum(signs < 0)
+n <- positivo + negativo
+p_value_sign <- 2 * min(positivo, negativo) / n
+
+# Mostrar resultados de la Prueba de Signos
+cat("Prueba de Signos:\n")
+cat("Positivos:", positivo, "\n")
+cat("Negativos:", negativo, "\n")
+cat("Valor p:", p_value_sign, "\n\n")
+
+# Prueba de Wilcoxon
+wilcox_test <- wilcox.test(antes, despues4, paired = TRUE, alternative = "two.sided")
+
+# Mostrar resultados de la Prueba de Wilcoxon
+cat("Prueba de Wilcoxon:\n")
+print(wilcox_test)
 
 ```
 

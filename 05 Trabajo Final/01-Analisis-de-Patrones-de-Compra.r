@@ -15,7 +15,7 @@ data <- data.frame(
         40.5,10.5,10.5,19.5,30,40.5,10.5,30,19.5,19.5,3.5,19.5,19.5,40.5,10.5,
         10.5,30,10.5,10.5,10.5,3.5,40.5,30,10.5,40.5,
         19.5,40.5,30,10.5,19.5,40.5,30,3.5,40.5,30,3.5,40.5,30,30,40.5,
-        19.5,19.5,19.5,30,10.5,3.5
+        19.5,19.5,19.5,30,10.5
     )
 )
 
@@ -23,7 +23,7 @@ data <- data.frame(
 data <- data %>%
     group_by(Genero) %>%
     mutate(Rango_calculado = rank(-Puntaje, ties.method = "average"))
-
+data
 # b) Interpretar los rangos
 # (Interpretación manual requerida)
 

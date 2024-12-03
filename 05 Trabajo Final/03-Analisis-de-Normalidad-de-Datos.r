@@ -3,8 +3,9 @@ library(ggplot2)
 library(stats)
 library(nortest)
 
-# Leer los datos
-datos <- read.csv("normality_test.csv", header = TRUE)
+# Establecer el directorio de trabajo
+setwd("C:/Heri/GitHub/Metodos de Inferencia II/05 Trabajo Final")
+datos <- read.csv("normality-test.csv", header = TRUE)
 
 # a) Visualización de la Distribución
 
@@ -73,3 +74,11 @@ shapiro_result <- shapiro.test(datos$x)
 ks_result
 lillie_result
 shapiro_result
+
+
+
+
+
+
+
+
