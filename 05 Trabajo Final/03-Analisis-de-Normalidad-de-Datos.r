@@ -61,6 +61,7 @@ d_minus <- max(pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)) - (ecdf_fu
 d_plus
 d_minus
 
+cat("D+ =", d_plus, "\nD- =", d_minus)
 # Gráfico de distancias
 plot(ecdf_func, main = "D+ y D- sobre la ECF", xlab = "x", ylab = "F(x)")
 curve(pnorm(x, mean = mean(datos$x), sd = sd(datos$x)), add = TRUE, col = "red")

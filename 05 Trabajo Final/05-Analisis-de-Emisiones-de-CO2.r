@@ -62,11 +62,13 @@ m_U
 
 sigma_U <- sqrt(n1 * n2 * (n1 + n2 + 1) / 12)
 
-z <- (sum_ranks - mu_U) / sigma_U
+z <- (sum_ranks - m_U) / sigma_U
 z
 
 p_value <- 1 - pnorm(z)
 p_value
+
+cat("Prueba Wilcoxon manual:\n W_x =", sum_ranks, "\n", "p-valor =", p_value, "\n")
 
 # e) Comparar con wilcox.test
 wilcox.test(usa, canada, alternative = "greater")
@@ -90,3 +92,5 @@ p_manual <- 1 - pt(t_stat, df)
 t_stat
 df
 p_manual
+
+cat("Prueba t manual:\n t =", t_stat, "\ndf =", df , "\np-valor =", p_manual, "\n", "  Media EEUU =", mean_usa, "\n", "  Media Canada =", mean_canada, "\n")

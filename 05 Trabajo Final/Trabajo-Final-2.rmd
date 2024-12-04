@@ -1,0 +1,1025 @@
+---
+title: "Trabajo Final Complementario"
+output:     
+  html_document:
+    theme: darkly
+    highlight: breezedark
+    css: styles.css
+---
+
+<style>
+h1.title {
+  margin: 50px 20px 50px 20px;
+  font-size: 3em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.portada {
+  max-width: 800px;
+  margin: 100px auto;
+  text-align: center;
+  font-size: 1.2em;
+}
+
+.trabalo {
+  max-width: 800px;
+  margin: 100px auto;
+  font-size: 1.2em;
+  text-align: justify;
+}
+
+</style>
+
+---
+
+<div class="portada">
+  
+  Andrea Hernandez y Heriberto Espino  
+  Universidad de las Américas Puebla  
+  O24 LAT3062 1: Métodos de Inferencia II  
+  4 de diciembre de 2024
+  
+</div>
+
+---     
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(comment = "")
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<div class="trabalo">
+
+# **Análisis de Patrones de Compra**
+
+Se busca investigar si los hombres tienen menos intención de compra que las mujeres, utilizando los rangos derivados de sus puntajes en una escala de compra.
+
+<br>
+<center>
+\( H_0: \)
+Las distribuciones de los puntajes de intención de compra son iguales para hombres y mujeres.
+
+**\(vs\)**
+
+\( H_a: \)
+Los hombres tienen menor intención de compra que las mujeres (puntajes estocásticamente menores).
+
+</center>
+<br>
+
+Los rangos están ya para una prueba de Wilcoxon. Haciendo los calculos obtenemos lo siguiente:
+
+
+```{r 01}
+
+Rango_1 = c(40.5, 3.5, 3.5, 19.5, 30, 40.5, 10.5, 30, 19.5, 19.5, 3.5, 19.5, 19.5, 40.5, 10.5, 10.5, 30, 10.5, 10.5, 10.5, 3.5, 40.5, 30, 10.5)
+Rango_2 = c(40.5, 19.5, 40.5, 30, 10.5, 19.5, 40.5, 30, 3.5, 40.5, 30, 3.5, 40.5, 30, 30, 40.5, 19.5, 19.5, 19.5, 30, 10.5)
+
+Sum_r1 = sum(Rango_1)
+Sum_r2 = sum(Rango_2)
+
+n1 = length(Rango_1)
+n2 = length(Rango_2)
+
+E_x = n1 * (n1 + n2 + 1) / 2
+Var_x = n1 * n2 * (n1 + n2 + 1) / 12
+
+U_x = (Sum_r1 - E_x) / sqrt(Var_x)
+
+p_value = pnorm(U_x)
+
+cat("Valor de n_x:", n1, "\nValor de n_y:", n2, "\nValor de W_x:", Sum_r1, "\nValor de W_y:", Sum_r2,
+    "\nValor de E_x:", E_x, "\nValor de Var_x:", Var_x, "\nW ~ N(", E_x, ",", Var_x, ")\nValor de Z:", U_x, "\nValor de p:", p_value)
+
+```
+
+
+**Suma de rangos**:
+
+
+Hombres \( R_h = 467 \)
+
+Mujeres \( R_m =  548.5 \)
+
+La suma de rangos de los hombres es menor que la de las mujeres. Esto sugiere, preliminarmente, que los hombres podrían tener menor intención de compra en comparación con las mujeres.
+
+### Prueba Utilizada: **Wilcoxon Rank-Sum Test**
+
+p-valor obtenido: **\( p = 0.02657 \)**
+
+A un nivel de significancia del 5%, \( \alpha = 0.05 \).
+\( p = 0.02657 < \alpha = 0.05 \), se **rechaza \( H_0 \)**.
+
+
+Con un valor \( p = 0.02657 \), existe suficiente evidencia para concluir que los hombres tienen menor intención de compra que las mujeres en este estudio. Esto apoya la hipótesis alternativa de que los puntajes de los hombres son estocásticamente menores.
+
+
+La prueba de Wilcoxon resulta adecuada, dado que no se asume normalidad en las distribuciones de los puntajes. Este resultado podría tener implicaciones prácticas en estrategias de marketing orientadas por género.
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<br>
+
+
+# **Evaluacion del Rendimiento de Pruebas de Normalidad**
+
+Texto
+
+$H_0: \mu \leq 200$ vs $H_a: \mu > 200$ 
+
+**Hipótesis nula:** La media de los niveles de colesterol en adultos de la
+ciudad es menor o igual a 200 mg/dL vs
+**Hipótesis alternativa:** La media de los niveles de colesterol en adultos
+de la ciudad es mayor a 200 mg/dL.
+
+
+```{r 02}
+
+# 02.r
+
+library(nortest)
+library(moments)
+library(ggplot2)
+
+set.seed(123)
+
+# Define parameters
+sample_sizes <- c(30, 120, 480)
+B <- 100
+alpha <- 0.10
+
+# Initialize results
+results <- list(
+  H0_true = list(),
+  H0_false = list()
+)
+
+# Simulation function
+simulate_tests <- function(n, dist, test_funcs, B, alpha) {
+  rejections <- matrix(0, nrow = B, ncol = length(test_funcs))
+  colnames(rejections) <- names(test_funcs)
+  
+  for (i in 1:B) {
+    if (dist == "normal") {
+      data <- rnorm(n)
+    } else {
+      data <- rt(n, df = 5)
+    }
+    for (test in names(test_funcs)) {
+      test_result <- tryCatch(test_funcs[[test]](data), error = function(e) NULL)
+      if (!is.null(test_result) && test_result$p.value < alpha) {
+        rejections[i, test] <- 1
+      }
+    }
+  }
+  colMeans(rejections)
+}
+
+library(nortest)   # For lillie.test, cvm.test, ad.test
+library(stats)     # For shapiro.test
+
+# Define tests
+test_functions <- list(
+  LT = lillie.test,
+  CVMT = cvm.test,
+  AD = ad.test,
+  SFT = shapiro.test
+)
+
+# Run simulations for H0_true
+for (n in sample_sizes) {
+  results$H0_true[[as.character(n)]] <- simulate_tests(n, "normal", test_functions, B, alpha)
+}
+
+# Create tables
+library(knitr)
+kable(as.data.frame(results$H0_true), digits = 3, caption = "H0 True: Proportion of Rejections")
+kable(as.data.frame(results$H0_false), digits = 3, caption = "H0 False: Proportion of Rejections")
+
+# Plot p-values distribution (example for one n)
+n_example <- 30
+p_values_true <- replicate(B, {
+  data <- rnorm(n_example)
+  sapply(test_functions, function(f) f(data)$p.value)
+})
+p_values_false <- replicate(B, {
+  data <- rt(n_example, df = 5)
+  sapply(test_functions, function(f) f(data)$p.value)
+})
+
+p_df_true <- data.frame(t(p_values_true))
+p_df_true$Test <- rownames(p_df_true)
+p_df_true_melt <- reshape2::melt(p_df_true, id.vars = "Test")
+
+p_df_false <- data.frame(t(p_values_false))
+p_df_false$Test <- rownames(p_df_false)
+p_df_false_melt <- reshape2::melt(p_df_false, id.vars = "Test")
+
+ggplot(p_df_true_melt, aes(x = value, fill = Test)) +
+  geom_density(alpha = 0.5) +
+  labs(title = paste("P-Values Distribution H0 True n =", n_example), x = "P-Value")
+
+ggplot(p_df_false_melt, aes(x = value, fill = Test)) +
+  geom_density(alpha = 0.5) +
+  labs(title = paste("P-Values Distribution H0 False n =", n_example), x = "P-Value")
+
+```
+
+Responderemos cada inciso para evaluar las cinco pruebas de normalidad (LT, CVMT, AD, SFT, y SWT) en diferentes situaciones según el rendimiento esperado al cumplir o no \( H_0 \).
+
+### a) Escenarios para \( H_0 \)
+
+1. **\( H_0 \) Verdadera:**
+- Las muestras provienen de una distribución normal (\( \mathcal{N}(\mu, \sigma^2) \)).
+
+2. **\( H_0 \) Falsa:**
+- Las muestras provienen de una distribución no normal, como:
+- Distribución \( t \) con pocos grados de libertad (\( t(df=3) \)).
+- Distribución \( \chi^2 \) con pocos grados de libertad (\( \chi^2(k=4) \)).
+- Distribución uniforme (\( \mathcal{U}(0,1) \)).
+
+### b) Tamaños de muestra y simulaciones
+
+1. Tamaños de muestra: \( n = 30 \), \( n = 120 \), \( n = 480 \).
+2. Repeticiones: \( B = 10,000 \).
+3. Significancia: \( \alpha = 0.10 \).
+4. Proceso:
+- Generar \( B \) muestras de tamaño \( n \) según el escenario (\( H_0 \) verdadera o falsa).
+- Aplicar las pruebas LT, CVMT, AD, SFT, y SWT.
+- Registrar proporciones de rechazo de \( H_0 \) para cada prueba.
+
+### c) Distribución de valores p
+
+**Situación 1: \( H_0 \) Verdadera**
+- Los valores \( p \) se distribuyen uniformemente en \( [0,1] \).
+- Al aumentar \( n \), los valores \( p \) tienden a concentrarse más cerca de \( 1 \) si los datos cumplen \( H_0 \).
+
+**Situación 2: \( H_0 \) Falsa**
+- Los valores \( p \) se concentran cerca de \( 0 \).
+- Al aumentar \( n \), el poder de las pruebas crece, y \( p \) disminuye aún más.
+
+#### Comparación gráfica
+- Gráficos lado a lado de los valores \( p \) permiten visualizar diferencias entre \( H_0 \) verdadera y falsa.
+
+### d) Ganador cuando \( H_0 \) se cumple
+
+- **Ganador:** La prueba que menos veces rechaza \( H_0 \) (menor proporción de falsos positivos).
+- **Resultados esperados:**
+- Con \( n \) pequeño: Las diferencias entre las pruebas pueden ser mínimas.
+- Con \( n \) grande: Es probable que todas las pruebas converjan en un rendimiento similar, pero algunas pueden seguir siendo más conservadoras.
+
+### e) Ganador cuando \( H_0 \) no se cumple
+
+- **Ganador:** La prueba que más veces rechaza \( H_0 \) (mayor poder estadístico).
+- **Resultados esperados:**
+- Con \( n \) pequeño: Variación en el poder de las pruebas. Pruebas más robustas (como AD o SWT) tienden a sobresalir.
+- Con \( n \) grande: Todas las pruebas deberían rechazar \( H_0 \) con alta frecuencia, pero la diferencia entre ellas puede disminuir.
+
+### f) Comparación por tamaños de muestra
+
+1. **\( n \) pequeño:**
+- Las diferencias entre las pruebas pueden ser más notorias.
+- Es posible que el "ganador" para \( n = 30 \) no sea el mismo para \( n = 480 \).
+
+2. **\( n \) grande:**
+- Todas las pruebas tienden a converger en rendimiento.
+- Sin embargo, algunas pruebas pueden ser consistentemente mejores para \( H_0 \) verdadera (menores falsos positivos) o falsa (mayor poder).
+
+### g) Conclusión general
+
+1. **Mejor prueba para \( H_0 \) Verdadera:**
+- Pruebas conservadoras como LT o CVMT, ya que son menos propensas a rechazar \( H_0 \) incorrectamente.
+
+2. **Mejor prueba para \( H_0 \) Falsa:**
+- Pruebas con mayor poder como AD y SWT, ya que detectan con más eficacia violaciones de la normalidad.
+
+3. **Comentarios según \( n \):**
+- Para tamaños pequeños (\( n = 30 \)), el rendimiento entre las pruebas puede variar más.
+- Para tamaños grandes (\( n = 480 \)), todas las pruebas tienden a converger, pero SWT y AD suelen ser más robustas.
+
+4. **Contexto:**
+- Elegir la prueba depende de las prioridades del investigador:
+- Minimizar falsos positivos (\( H_0 \) verdadera).
+- Maximizar poder (\( H_0 \) falsa).
+- SWT y AD son versátiles y tienden a tener buen desempeño en ambos escenarios.
+
+---
+
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# **Analisis de normalidad de datos**
+
+Se desea evaluar la normalidad de un conjunto de datos contenidos en el archivo `normality_test.csv`. Para ello, se emplean visualizaciones, pruebas de bondad de ajuste y pruebas de normalidad específicas.
+<br>
+<center>
+\( H_0: \) Los datos siguen una distribución normal. 
+
+**\(vs\)**
+
+\( H_a: \)
+Los datos no siguen una distribución normal. 
+
+</center>
+<br>
+
+
+```{r 03}
+
+# Cargar librerías necesarias
+library(ggplot2)
+library(stats)
+library(nortest)
+
+# Establecer el directorio de trabajo
+setwd("C:/Heri/GitHub/Metodos de Inferencia II/05 Trabajo Final")
+datos <- read.csv("normality-test.csv", header = TRUE)
+
+
+
+
+
+```
+
+### **Visualización de la Distribución**
+
+```{r}
+# Histograma con densidad normal estimada
+ggplot(datos, aes(x = x)) +
+    geom_histogram(aes(y = ..density..), binwidth = 0.5, fill = "#1C5C3D", color = "white", size=1.5) +
+    stat_function(fun = dnorm, args = list(mean = mean(datos$x), sd = sd(datos$x)), color = "#C42D2D", size = 1.5) +
+    labs(title = "Histograma con Densidad Normal Estimada", x = "x", y = "Densidad") +
+    theme_minimal()
+
+```
+
+
+Los datos parecen seguir un patrón cercano a una normalidad, pero con ligeros desvíos en las colas.
+
+```{r}
+
+# Función de Distribución Empírica (ECDF)
+ggplot(datos, aes(x = x)) +
+    stat_ecdf(geom = "step", size = 1.2, color = "#1C5C3D") +
+    stat_function(fun = pnorm, args = list(mean = mean(datos$x), sd = sd(datos$x)), color = "#C42D2D", size = 1.2) +
+    labs(title = "Función de Distribución Empírica vs Normal", x = "x", y = "Probabilidad Acumulada") +
+    theme_minimal()
+
+
+```
+
+
+Hay ligeras discrepancias entre la distribución empírica y la normal estimada.
+
+```{r}
+# Gráfico QQ
+ggplot(datos, aes(sample = x)) +
+    stat_qq(color = "#FFBF00", shape = 8, size = 3 ) +
+    stat_qq_line(color = "#C42D2D", 
+                 size = 1.2) +
+    labs(title = "Gráfico QQ", x = "Cuantiles Teóricos", y = "Cuantiles Muestrales") +
+    theme_minimal()
+
+
+```
+
+
+Las observaciones centrales siguen una línea recta, pero hay desviaciones en las colas.
+
+
+
+
+### **Partición del Espacio y Prueba de Bondad de Ajuste**
+
+Se dividió el rango de los datos en intervalos solo con la regla de Sturges, \( \lceil 1 + \text{log}_2(80\rceil = 8 \), para crear categorías, utilizando los cuantiles. También se intentó con la regla de Rice, Scott y Freedman-Diaconis, pero daban muchas particiones, donde nuestras observaciones eran menores a 5. 
+
+Las particiones se hicieron sobre los cuantiles, esto crea los límites de los intervalos de las clases adaptados a la distribución de los datos y aseguran que cada intervalo tenga una cantidad similar de observaciones, independientemente de los valores extremos. Luego se comparó la frecuencia observada en cada categoría con las frecuencias esperadas de una distribución normal.
+
+
+
+```{r}
+
+n <- 80
+# Número de clases
+cantidad_clases <- 8
+
+# Calcular los límites de las clases
+breaks <- quantile(datos$x, probs = seq(0, 1, length.out = cantidad_clases + 1))
+
+# Frecuencias observadas
+observados <- table(cut(datos$x, breaks = breaks, include.lowest = TRUE))
+
+# Frecuencias esperadas
+esperados <- diff(pnorm(breaks, mean = mean(datos$x), sd = sd(datos$x))) * length(datos$x)
+
+# Normalizar las probabilidades para que sumen 1
+probs <- diff(pnorm(breaks, mean = mean(datos$x), sd = sd(datos$x)))
+probs <- probs / sum(probs) # Normalización
+
+ggplot(datos, aes(x = x)) +
+    geom_histogram(binwidth = 0.5, fill = "#1C5C3D", color = "white", alpha=0.6, size = 1.2) +
+    geom_vline(xintercept = breaks, color = "#C42D2D", linetype = "dashed", size = 1) +
+    labs(title = "Histograma con Particiones", x = "x", y = "Frecuencia") +
+    theme_minimal()
+
+
+```
+
+Se añadieron líneas verticales que representan los límites de las categorías. Esto permite visualizar las discrepancias entre las frecuencias observadas y esperadas.
+
+
+```{r}
+# Prueba de chi-cuadrada
+chisq.test(observados, p = probs)
+
+
+```
+
+Como $p = 0.3269$, no hay evidencia de que los datos no se ajustan a una distribución normal.
+
+### **Pruebas de normalidad**
+
+```{r}
+
+# c) Pruebas de Normalidad
+
+# Prueba de Kolmogorov-Smirnov
+ks_result <- ks.test(datos$x, "pnorm", mean = mean(datos$x), sd = sd(datos$x))
+ks_result
+
+# Cálculo manual de D- y D+
+ecdf_func <- ecdf(datos$x)
+d_plus <- max(ecdf_func(datos$x) - pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)))
+d_minus <- max(pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)) - (ecdf_func(datos$x) - 1/length(datos$x)))
+
+cat("D+ =", d_plus, "\nD- =", d_minus)
+
+# Gráfico de distancias
+plot(ecdf_func, main = "D+ y D- sobre la ECF", xlab = "x", ylab = "F(x)", pch = 8, col = "#FFBF00")
+curve(pnorm(x, mean = mean(datos$x), sd = sd(datos$x)), add = TRUE, col = "#C42D2D", size = 1.5)
+abline(v = datos$x[which.max(ecdf_func(datos$x) - pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)))], col = "#3B9C38", lty = 2)
+abline(v = datos$x[which.max(pnorm(datos$x, mean = mean(datos$x), sd = sd(datos$x)) - (ecdf_func(datos$x) - 1/length(datos$x)))], col = "#1C5C3D", lty = 2)
+
+# Comparación con funciones de prueba
+lillie_result <- lillie.test(datos$x)
+shapiro_result <- shapiro.test(datos$x)
+
+```
+
+*(Casi no parece pero eran colores de navidad, navidad, dulce navidad)*
+
+**Valores \(D^+\) y \(D^-\)**:
+
+- \(D^+ = 0.11893\)
+- \(D^- = 0.04572\)
+- \(D = \max(D^+, D^-) = 0.11893\)
+
+No rechazamos $H_0$. Los datos pueden seguir una distribución normal.
+
+```{r}
+
+ks_result
+lillie_result
+shapiro_result
+
+```
+
+Para un nivel de significancia del 5%, $\alpha = 0.05$:
+
+- **Kolmogorov-Smirnov**: No rechaza la hipótesis de normalidad (\(p > 0.05\)).
+- **Lilliefors**: Rechaza la hipótesis de normalidad (\(p < 0.05\)).
+- **Shapiro-Francia**: También rechaza la normalidad (\(p < 0.05\)).
+
+
+Las pruebas Lilliefors y Shapiro-Francia sugieren que los datos no son normales. Kolmogorov-Smirnov no detectó diferencias significativas, pero puede ser menos sensible.
+
+Las discrepancias en los resultados pueden deberse a diferencias en la sensibilidad de las pruebas a ciertos patrones de no normalidad. Entonces, para futuros análisis tendriamos que usar métodos no paramétricos.
+
+---
+
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# **Pruebas Bootstrap y Monte Carlo para Graficos QQ**
+
+Texto
+
+```{r 04}
+
+# Alternativa Monte Carlo y Bootstrap para Pruebas de Bondad de Ajuste en Gráficos QQ
+
+set.seed(123)
+library(ggplot2)
+
+# Parámetros
+n <- 30
+M <- 1000
+B <- 1000
+alpha <- 0.01
+
+# Funciones para generar cuantiles teóricos
+qq_theoretical <- function(data, dist = "gamma") {
+  n <- length(data)
+  sorted_data <- sort(data)
+  if (dist == "gamma") {
+    shape <- 2
+    rate <- 1
+    return(qgamma((1:n)/(n + 1), shape=shape, rate=rate))
+  } else if (dist == "lnorm") {
+    meanlog <- 0
+    sdlog <- 1
+    return(qlnorm((1:n)/(n + 1), meanlog=meanlog, sdlog=sdlog))
+  }
+}
+
+# Alternativa Monte Carlo
+monte_carlo_bands <- function(data, dist, M, alpha) {
+  n <- length(data)
+  theoretical <- qq_theoretical(data, dist)
+  mc_quantiles <- matrix(0, nrow=M, ncol=n)
+  
+  for(i in 1:M) {
+    if(dist == "gamma"){
+      sim <- rgamma(n, shape=2, rate=1)
+    } else if(dist == "lnorm"){
+      sim <- rlnorm(n, meanlog=0, sdlog=1)
+    }
+    mc_quantiles[i, ] <- sort(sim)
+  }
+  
+  lower <- apply(mc_quantiles, 2, quantile, probs=alpha/2)
+  upper <- apply(mc_quantiles, 2, quantile, probs=1 - alpha/2)
+  return(data.frame(theoretical, lower, upper))
+}
+
+# Alternativa Bootstrap
+bootstrap_bands <- function(data, dist, B, alpha) {
+  n <- length(data)
+  sorted_data <- sort(data)
+  bootstrap_quantiles <- matrix(0, nrow=B, ncol=n)
+  
+  for(i in 1:B) {
+    indices <- sample(1:n, size=n, replace=TRUE)
+    sample_data <- data[indices]
+    bootstrap_quantiles[i, ] <- sort(sample_data)
+  }
+  
+  lower <- apply(bootstrap_quantiles, 2, quantile, probs=alpha/2)
+  upper <- apply(bootstrap_quantiles, 2, quantile, probs=1 - alpha/2)
+  theoretical <- qq_theoretical(data, dist)
+  return(data.frame(theoretical, lower, upper))
+}
+
+# Simulación para Gamma
+sample_gamma <- rgamma(n, shape=2, rate=1)
+qq_data_gamma <- data.frame(
+  observed = sort(sample_gamma),
+  theoretical = qq_theoretical(sample_gamma, "gamma")
+)
+
+mc_bands_gamma <- monte_carlo_bands(sample_gamma, "gamma", M, alpha)
+bootstrap_bands_gamma <- bootstrap_bands(sample_gamma, "gamma", B, alpha)
+
+# Gráfico QQ con Monte Carlo
+ggplot(qq_data_gamma, aes(x=observed, y=theoretical)) +
+  geom_point() +
+  geom_line(aes(y=mc_bands_gamma$lower), linetype="dashed", color="blue") +
+  geom_line(aes(y=mc_bands_gamma$upper), linetype="dashed", color="blue") +
+  geom_abline(intercept=0, slope=1) +
+  labs(title="QQ Plot Gamma - Monte Carlo", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+# Gráfico QQ con Bootstrap
+ggplot(qq_data_gamma, aes(x=observed, y=theoretical)) +
+  geom_point() +
+  geom_line(aes(y=bootstrap_bands_gamma$lower), linetype="dashed", color="red") +
+  geom_line(aes(y=bootstrap_bands_gamma$upper), linetype="dashed", color="red") +
+  geom_abline(intercept=0, slope=1) +
+  labs(title="QQ Plot Gamma - Bootstrap", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+# Simulación para Lognormal
+sample_lnorm <- rlnorm(n, meanlog=0, sdlog=1)
+qq_data_lnorm <- data.frame(
+  observed = sort(sample_lnorm),
+  theoretical = qq_theoretical(sample_lnorm, "lnorm")
+)
+
+mc_bands_lnorm <- monte_carlo_bands(sample_lnorm, "lnorm", M, alpha)
+bootstrap_bands_lnorm <- bootstrap_bands(sample_lnorm, "lnorm", B, alpha)
+
+# Gráfico QQ con Monte Carlo
+ggplot(qq_data_lnorm, aes(x=observed, y=theoretical)) +
+  geom_point() +
+  geom_line(aes(y=mc_bands_lnorm$lower), linetype="dashed", color="blue") +
+  geom_line(aes(y=mc_bands_lnorm$upper), linetype="dashed", color="blue") +
+  geom_abline(intercept=0, slope=1) +
+  labs(title="QQ Plot Lognormal - Monte Carlo", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+# Gráfico QQ con Bootstrap
+ggplot(qq_data_lnorm, aes(x=observed, y=theoretical)) +
+  geom_point() +
+  geom_line(aes(y=bootstrap_bands_lnorm$lower), linetype="dashed", color="red") +
+  geom_line(aes(y=bootstrap_bands_lnorm$upper), linetype="dashed", color="red") +
+  geom_abline(intercept=0, slope=1) +
+  labs(title="QQ Plot Lognormal - Bootstrap", x="Cuantiles Observados", y="Cuantiles Teóricos")
+
+
+```
+
+Texto
+
+
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# **Análisis de Emisiones de CO2: E.E.U.U. vs México**
+
+Este ejercicio evalúa si las emisiones de CO2 en los Estados Unidos son estocásticamente mayores que en México desde 1930 en adelante. Se utilizan pruebas estadísticas no paramétricas y paramétricas para analizar las diferencias entre ambos países.
+
+
+### **Filtrado y Limpieza** 
+**Filtrado por Año**: Se incluyeron solo las observaciones desde 1930 en adelante.  
+**Limpieza de Datos**: Se eliminaron las observaciones con valores de 0 y las entradas vacías para evitar sesgos.
+
+### **Prueba no paramétrica**
+
+<br>
+<center>
+\(H_0\): No hay diferencia en la distribución de emisiones de CO2 entre E.E.U.U. y México.
+
+**\(vs\)**
+
+\(H_a\): Las emisiones de CO2 en E.E.U.U. son estocásticamente mayores que en México.
+</center>
+<br>
+
+
+```{r}
+
+# a) Filtrar los datos para incluir solo las observaciones desde 1930 en adelante
+setwd("C:/Heri/GitHub/Metodos de Inferencia II/05 Trabajo Final")
+data <- read.csv("CO2-emissions.csv", stringsAsFactors = FALSE)
+data_filtered <- subset(data, Year >= 1930)
+
+rank_function <- function(list1, list2) {
+  
+  combined <- c(list1, list2)
+  sorted_combined <- sort(combined)
+  
+  sorted_list1 <- sort(list1)
+  sorted_list2 <- sort(list2)
+  
+  matrix1 <- data.frame(Value = sorted_list1, Type = "x", stringsAsFactors = FALSE)
+  matrix2 <- data.frame(Value = sorted_list2, Type = "y", stringsAsFactors = FALSE)
+  
+  matrix <- rbind(matrix1, matrix2)
+  matrix <- matrix[order(matrix$Value), ]
+  
+  sorted_matrix <- matrix
+  sorted_matrix$Rank <- 1:nrow(sorted_matrix)
+  
+  sorted_matrix$Count <- ifelse(sorted_matrix$Type == "x", 
+                                sapply(1:nrow(sorted_matrix), function(i) sum(sorted_matrix$Type[1:(i-1)] == "y" & sorted_matrix$Value[1:(i-1)] < sorted_matrix$Value[i])), 
+                                0)
+  
+  header <- "Value\tType\tRank\tCount\n"
+  result <- apply(sorted_matrix, 1, function(row) {
+    paste(row["Value"], row["Type"], row["Rank"], row["Count"], sep = "\t")
+  })
+  
+  sum_ranks <- sum(sorted_matrix$Rank[sorted_matrix$Type == "x"])
+  sum_counts <- sum(sorted_matrix$Count[sorted_matrix$Type != "-"])
+  
+  sum_ranks_msg <- paste("\nsum_ranks list1 > list2 =", sum_ranks, "\n")
+  sum_counts_msg <- paste("sum_counts =", sum_counts, "\n")
+  
+  return(sum_counts)
+}
+
+# Wilcoxon Rank Sum Test
+
+usa <- data_filtered$USA
+
+mexico <- data_filtered$Mexico
+
+sum_ranks <- rank_function(usa, mexico)
+
+n1 <- length(usa)
+
+n2 <- length(mexico)
+
+mu_U <- n1 * n2 / 2
+
+sigma_U <- sqrt(n1 * n2 * (n1 + n2 + 1) / 12)
+
+z <- (sum_ranks - mu_U) / sigma_U
+
+p_value <- 1 - pnorm(z)
+
+cat("Prueba Wilcoxon manual:\n\n  W =", sum_ranks, "\n", " p-valor =", p_value, "\n")
+
+EEUU <- usa
+Mexico <- mexico
+# e) Comparar con wilcox.test
+wilcox.test(EEUU, Mexico, alternative = "greater")
+# Comentario: Comparar z y p_value con wilcox_result$statistic y wilcox_result$p.value
+```
+
+Tenemos un p-valor muy bajo, \(p < 2.2 \times 10^{-16}\), entonces se rechaza \(H_0\). Las emisiones de CO2 en E.E.U.U. son significativamente mayores que en México.
+
+### **Diferencia de Medias**
+
+<br>
+<center>
+\(H_0\): La media de emisiones de CO2 en E.E.U.U. es igual a la media en México.
+
+**\(vs\)**
+
+\(H_a\): La media de emisiones de CO2 en E.E.U.U. es mayor que en México.
+
+</center>
+<br>
+
+```{r}
+
+# a) Filtrar los datos para incluir solo las observaciones desde 1930 en adelante
+setwd("C:/Heri/GitHub/Metodos de Inferencia II/05 Trabajo Final")
+data <- read.csv("CO2-emissions.csv", stringsAsFactors = FALSE)
+data_filtered <- subset(data, Year >= 1930)
+
+usa <- data_filtered$USA
+
+mexico <- data_filtered$Mexico
+
+
+EEUU <- usa
+Mexico <- mexico
+
+# g) Prueba t de manera manual
+mean_usa <- mean(usa)
+mean_mexico <- mean(mexico)
+var_usa <- var(usa)
+var_mexico <- var(mexico)
+t_stat <- (mean_usa - mean_mexico) / sqrt(var_usa/n1 + var_mexico/n2)
+df <- (var_usa/n1 + var_mexico/n2)^2 / ((var_usa^2)/(n1^2*(n1-1)) + (var_mexico^2)/(n2^2*(n2-1)))
+p_manual <- 1 - pt(t_stat, df)
+
+# Resultado
+
+cat("Prueba t para dos medias manual:\n\n  t =", t_stat, "\n  df =", df , "\n  p-valor =", p_manual,
+"\n  Media EEUU =", mean_usa, "\n  Media Mexico =", mean_mexico, "\n")
+
+# e) Comparar con wilcox.test
+# Comentario: Comparar z y p_value con wilcox_result$statistic y wilcox_result$p.value
+
+# f) Prueba t para diferencia de medias
+t.test(EEUU, Mexico, alternative = "greater", var.equal = FALSE)
+# Verificar supuestos: normalidad y homogeneidad de varianzas
+# Si no se cumplen, comparar con Mann-Whitney y t Bootstrap
+```
+
+**Supuestos de la Prueba t**  
+**Normalidad**: Con grandes tamaños de muestra, el teorema central del límite puede justificar la normalidad.  
+**Homogeneidad de Varianzas**: Se utilizó la versión de Welch, que no asume varianzas iguales.
+
+Volvemos a tener un $p-valor$ muy bajo, rechazamos $H_0$. La media de emisiones de CO2 en E.E.U.U. es mayor que en México.
+
+
+### **Mann-Whitney vs Prueba t**:
+- Ambas pruebas indican que las emisiones de E.E.U.U. son mayores que las de México.
+- La prueba t mide diferencias en medias, mientras que Mann-Whitney evalúa diferencias en la distribución.
+- Si los supuestos de la prueba t no se cumplen (e.g., normalidad), el método Bootstrap puede proporcionar una estimación robusta.
+
+
+
+### **Conclusiones**
+
+- Las emisiones de CO2 en E.E.U.U. son significativamente mayores que en México.
+- Las pruebas no paramétricas y t producen resultados consistentes, aunque evalúan propiedades diferentes de los datos.
+- En situaciones donde no se cumplen los supuestos de la prueba t, el Bootstrap o pruebas no paramétricas son alternativas adecuadas.
+
+---
+
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# **Efecto de una Dieta Especial sobre el Colesterol**
+
+Se evaluó el efecto de una dieta especial con margarina Clora en los niveles de colesterol de participantes. Se midieron los niveles de colesterol antes de la dieta, después de 4 semanas y después de 8 semanas. 
+El objetivo es determinar si la dieta produjo un efecto significativo utilizando una prueba no paramétrica adecuada.
+
+### **Prueba de Hipótesis**
+
+
+<br>
+<center>
+\(H_0: \) No hay diferencia significativa entre los niveles de colesterol antes de la dieta y después de 4 semanas (\(m_{\text{antes}} = m_{\text{después}}\)).
+
+**\(vs\)**
+
+\(H_a: \) Hay una diferencia significativa entre los niveles de colesterol antes de la dieta y después de 4 semanas (\(m_{\text{antes}} \neq m_{\text{después4}}\)).
+
+</center>
+<br>
+
+### **Selección de la Prueba**
+Por qué no usar la prueba de Mann-Whitney: Esta prueba compara dos muestras independientes, mientras que los datos en este estudio son pares (niveles de colesterol antes y después de la dieta son del mismo sujeto).
+La prueba de **Wilcoxon Signed Rank Test** es adecuada, ya que evalúa diferencias en datos relacionados.
+
+```{r}
+
+# Datos
+sujeto <- 1:18
+antes <- c(6.42, 6.76, 6.56, 4.80, 8.43, 7.49, 8.05, 5.05, 5.77, 3.91, 6.77, 6.44, 6.17, 7.67, 7.34, 6.85, 5.13, 5.73)
+despues4 <- c(5.83, 6.20, 5.83, 4.27, 7.71, 7.12, 7.25, 4.63, 5.31, 3.70, 6.15, 5.59, 5.56, 7.11, 6.84, 6.40, 4.52, 5.13)
+
+signs <- antes - despues4
+
+n <- length(signs)
+
+W <- n*(n+1)/2
+
+E_x <- n*(n+1)/4
+V_x <- n*(n+1)*(2*n+1)/24
+
+z <- (W - 0.5 - E_x) / sqrt(V_x)
+
+p_value <- 2 * (1 - pnorm(abs(z)))
+
+cat("WSRT Manual:\n  W =", W, "\n  E[x] = ", E_x, "\n  V[x] = ", V_x, "\n  Z = ", z,  "\n  p-valor =", p_value, "\n")
+
+# Prueba de Wilcoxon
+wilcox.test(antes, despues4, paired = TRUE, alternative = "two.sided")
+
+```
+
+
+### **Decisión**
+Dado que \(p = 0.0002134\), se rechaza la hipótesis nula. Hay evidencia estadísticamente significativa de que la dieta afecta los niveles de colesterol en los participantes.
+
+
+### **Conclusiones**
+La dieta especial con margarina Clora produjo un efecto significativo en los niveles de colesterol después de 4 semanas.
+Los resultados sugieren una disminución en los niveles de colesterol (mediana de las diferencias), aunque este análisis no cuantifica la magnitud del cambio.
+
+### **Comparación con la Prueba de Wilcoxon**
+
+Al realizar la prueba correctamente como pareada:
+- La prueba no paramétrica considera las relaciones dentro de los pares, lo cual es más adecuado para este tipo de diseño.
+- La prueba de Mann-Whitney, si se hubiera usado, no habría aprovechado la información de las dependencias dentro de los datos y podría haber llevado a conclusiones incorrectas.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
