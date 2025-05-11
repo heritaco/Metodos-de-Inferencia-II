@@ -2,11 +2,15 @@
 title: "Trabajo Final Complementario"
 output:     
   html_document:
-    theme: darkly
-    highlight: breezedark
+    theme: journal
+    highlight: kate
 ---
 
 <style>
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Times New Roman", sans-serif;
+}
 
 h1.title {
   margin: 50px 20px 50px 20px;
@@ -316,11 +320,11 @@ ggplot(p_df_true_melt, aes(x = value, fill = Test)) +
 
 ### **Ganador cuando $H_0$ se cumple**
 
-Cuando la hipótesis nula se cumple, las pruebas que tienen una proporción menor de falsos positivos son (en promedio) el **Test de Lilliefors (LT)**, seguido de el **Test de Shapiro-Wilk (SFT)**. Estas pruebas rechazan menos H_0 para un 10% de significancia en distintos tamaños de muestra, con proporciones muy similares entre sí, de aproximadamente 0.02. Aunque aumente el tamaño de muestra (n=30, n=480), las proporciones de rechazo no muestran un cambio significativo. No se observan patrones relevantes en las proporciones de rechazo al aumentar el tamaño de la muestra, lo que indica que las fluctuaciones entre tamaños de muestra son menores y probablemente debidas a variabilidad aleatoria.
+Cuando la hipótesis nula se cumple, las pruebas que tienen una proporción menor de falsos positivos son (en promedio) el **Test de Anderson-Darling (AD)**, seguido de el **Test de Shapiro-Wilk (SFT)**, rechazando un poco más del 10%. Estas pruebas rechazan menos H_0 para un 10% de significancia en distintos tamaños de muestra, con proporciones muy similares entre sí. Aunque aumente el tamaño de muestra (n=30, n=480), las proporciones de rechazo no muestran un cambio significativo. No se observan patrones relevantes en las proporciones de rechazo al aumentar el tamaño de la muestra, lo que indica que las fluctuaciones entre tamaños de muestra son menores y probablemente debidas a variabilidad aleatoria.
 
 ### **Ganador cuando $H_0$ no se cumple**
 
-El **Test de Cramér-von Mises (CVMT)** y el **Test de Anderson-Darling (AD)** son los ganadores cuando nuestra hipótesis nula no se cumple, ya que presentan las proporciones de rechazo más altas en los distintos tamaños de muestra. En este caso, si las proporciones de rechazo difieren significativamente entre pruebas (por ejemplo, una prueba tiene 0.8 mientras otras están cerca de 0.6), entonces habría un claro ganador. Sin embargo, si las proporciones son similares (diferencias menores a 0.1), la decisión será reñida.
+El **Test de Cramér-von Mises (CVMT)** y el **Lilliefors (LT)** son los ganadores cuando nuestra hipótesis nula no se cumple, ya que presentan las proporciones de rechazo más altas en los distintos tamaños de muestra.
 
 ### **Comparación por tamaños de muestra**
 
@@ -342,9 +346,9 @@ La elección de una prueba óptima depende tanto del tamaño de la muestra como 
 
 ### **Reflexión sobre los resultados**
 
-- En tamaños pequeños (n=30), **LT** y **SFT** tienen el mejor desempeño.  Solo los efectos grandes pueden ser detectados con confiabilidad.
+- En tamaños pequeños (n=30), **AD** y **SFT** tienen el mejor desempeño.  Solo los efectos grandes pueden ser detectados con confiabilidad.
 
-- En tamaños grandes (n=480), **AD** y **CVMT** tienen un mejor ajuste al nivel de significancia. Incluso las diferencias o desviaciones pequeñas pueden ser detectadas, lo que puede ser útil, pero también puede llevar a rechazos de la hipótesis nula que no sean relevantes en la práctica.
+- En tamaños grandes (n=480), **LT** y **AD** tienen un mejor ajuste al nivel de significancia. Incluso las diferencias o desviaciones pequeñas pueden ser detectadas, lo que puede ser útil, pero también puede llevar a rechazos de la hipótesis nula que no sean relevantes en la práctica.
 
 - **Pruebas pequeñas (n pequeño)**: Con pocas observaciones, las pruebas tienden a ser menos sensibles para detectar desviaciones de la hipótesis nula.
 
@@ -354,7 +358,7 @@ La elección de una prueba óptima depende tanto del tamaño de la muestra como 
 
 ### **Conclusión:**
 
-Cuando el tamaño de muestra es pequeño, las pruebas **SFT** o **LT** son mejores, ya que suelen adaptarse mejor a escenarios con poca información. Para n grandes, aunque cualquier prueba sea efectiva, **AD** y **CVMT** podrían mostrar ventajas específicas dependiendo de la situación.
+Cuando el tamaño de muestra es pequeño, las pruebas **SFT** o **AD** son mejores, ya que suelen adaptarse mejor a escenarios con poca información. Para n grandes, aunque cualquier prueba sea efectiva, **AD** y **LT** podrían mostrar ventajas específicas dependiendo de la situación.
 
 ---
 

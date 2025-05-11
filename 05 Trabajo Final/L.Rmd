@@ -1,0 +1,113 @@
+---
+title: "Geometric Brownian Motion (GBM)"
+output:     
+  html_document:
+    theme: journal
+    highlight: kate
+---
+
+<style>
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Times New Roman", sans-serif;
+  color: #434343;
+}
+
+h1.title {
+  margin: 90px 20px 50px 20px;
+  font-size: 3em;
+  font-weight: bold;
+  text-align: center;
+  color: #434343;
+}
+
+h2.title {
+  color: #434343;
+}
+
+.portada {
+  max-width: 800px;
+  margin: 100px auto;
+  text-align: center;
+  font-size: 1.2em;
+}
+
+.trabalo {
+  max-width: 800px;
+  margin: 100px auto;
+  font-size: 1.2em;
+  text-align: justify;
+  line-height: 2;
+}
+
+.trabalo h1 {
+  color: #606060;
+}
+
+.trabalo h2 {
+  color: #606060;
+}
+
+</style>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  comment = "",
+  warning = FALSE,
+  fig.align = 'center'
+)
+```
+
+<div class="trabalo">
+
+## What is GBM?
+Geometric Brownian Motion (GBM) is a mathematical model used to simulate the price of financial assets over time. It assumes that asset prices follow a stochastic process, incorporating both deterministic trends (drift) and random fluctuations (volatility). GBM is widely used in finance for modeling stock prices, options pricing, and risk analysis.
+
+## The GBM Equation
+The GBM equation for modeling the price $S(t)$ at time $t$ is:
+$$
+dS(t) = \mu S(t) dt + \sigma S(t) dW(t)
+$$
+Where:  
+- $S(t)$: Asset price at time $t$  
+- $\mu$: Drift rate (expected return of the asset)  
+- $\sigma$: Volatility (standard deviation of returns)  
+- $W(t)$: Wiener process (random component)  
+- $dt$: Time increment  
+
+## Discretized Form
+In discrete form, GBM can be written as:
+$$
+S_{t+1} = S_t \cdot \exp\left[\left(\mu - \frac{\sigma^2}{2}\right) \Delta t + \sigma \sqrt{\Delta t} \cdot Z\right]
+$$
+Where:  
+- $S_t$: Asset price at step $t$  
+- $\Delta t$: Time step  
+- $Z \sim N(0, 1)$: Random value drawn from a standard normal distribution  
+
+## Components Explained
+**Drift ($\mu$)**: Represents the average growth rate of the asset price. Accounts for deterministic trends like the expected return.
+
+**Volatility ($\sigma$)**: Represents the uncertainty or randomness in the asset price. Higher volatility leads to larger fluctuations.
+
+**Wiener Process ($W(t)$)**: A mathematical model for random motion. Simulates the unpredictable nature of asset prices.
+
+**Exponential Term**: Ensures the simulated prices remain positive, as prices cannot be negative.
+
+## Steps to Simulate GBM in Python
+**Calculate Drift and Volatility**:
+Use historical price data to compute the mean return and standard deviation of log returns.
+   
+
+```
+python
+log_returns = np.log(prices / prices.shift(1))
+mu = log_returns.mean()
+sigma = log_returns.std()   
+```
+
+
+</div>

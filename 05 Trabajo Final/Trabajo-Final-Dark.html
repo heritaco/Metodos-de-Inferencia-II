@@ -501,27 +501,23 @@ pruebas LT, CVMT, AD, SFT, y SWT y registrar proporciones de rechazo de
 cumple</strong></h3>
 <p>Cuando la hipótesis nula se cumple, las pruebas que tienen una
 proporción menor de falsos positivos son (en promedio) el <strong>Test
-de Lilliefors (LT)</strong>, seguido de el <strong>Test de Shapiro-Wilk
-(SFT)</strong>. Estas pruebas rechazan menos H_0 para un 10% de
-significancia en distintos tamaños de muestra, con proporciones muy
-similares entre sí, de aproximadamente 0.02. Aunque aumente el tamaño de
-muestra (n=30, n=480), las proporciones de rechazo no muestran un cambio
-significativo. No se observan patrones relevantes en las proporciones de
-rechazo al aumentar el tamaño de la muestra, lo que indica que las
-fluctuaciones entre tamaños de muestra son menores y probablemente
-debidas a variabilidad aleatoria.</p>
+de Anderson-Darling (AD)</strong>, seguido de el <strong>Test de
+Shapiro-Wilk (SFT)</strong>, rechazando un poco más del 10%. Estas
+pruebas rechazan menos H_0 para un 10% de significancia en distintos
+tamaños de muestra, con proporciones muy similares entre sí. Aunque
+aumente el tamaño de muestra (n=30, n=480), las proporciones de rechazo
+no muestran un cambio significativo. No se observan patrones relevantes
+en las proporciones de rechazo al aumentar el tamaño de la muestra, lo
+que indica que las fluctuaciones entre tamaños de muestra son menores y
+probablemente debidas a variabilidad aleatoria.</p>
 </div>
 <div id="ganador-cuando-h_0-no-se-cumple" class="section level3">
 <h3><strong>Ganador cuando <span class="math inline">\(H_0\)</span> no
 se cumple</strong></h3>
-<p>El <strong>Test de Cramér-von Mises (CVMT)</strong> y el <strong>Test
-de Anderson-Darling (AD)</strong> son los ganadores cuando nuestra
+<p>El <strong>Test de Cramér-von Mises (CVMT)</strong> y el
+<strong>Lilliefors (LT)</strong> son los ganadores cuando nuestra
 hipótesis nula no se cumple, ya que presentan las proporciones de
-rechazo más altas en los distintos tamaños de muestra. En este caso, si
-las proporciones de rechazo difieren significativamente entre pruebas
-(por ejemplo, una prueba tiene 0.8 mientras otras están cerca de 0.6),
-entonces habría un claro ganador. Sin embargo, si las proporciones son
-similares (diferencias menores a 0.1), la decisión será reñida.</p>
+rechazo más altas en los distintos tamaños de muestra.</p>
 </div>
 <div id="comparación-por-tamaños-de-muestra" class="section level3">
 <h3><strong>Comparación por tamaños de muestra</strong></h3>
@@ -556,11 +552,11 @@ desempeño en escenarios específicos según el problema.</p>
 <div id="reflexión-sobre-los-resultados" class="section level3">
 <h3><strong>Reflexión sobre los resultados</strong></h3>
 <ul>
-<li><p>En tamaños pequeños (n=30), <strong>LT</strong> y
+<li><p>En tamaños pequeños (n=30), <strong>AD</strong> y
 <strong>SFT</strong> tienen el mejor desempeño. Solo los efectos grandes
 pueden ser detectados con confiabilidad.</p></li>
-<li><p>En tamaños grandes (n=480), <strong>AD</strong> y
-<strong>CVMT</strong> tienen un mejor ajuste al nivel de significancia.
+<li><p>En tamaños grandes (n=480), <strong>LT</strong> y
+<strong>AD</strong> tienen un mejor ajuste al nivel de significancia.
 Incluso las diferencias o desviaciones pequeñas pueden ser detectadas,
 lo que puede ser útil, pero también puede llevar a rechazos de la
 hipótesis nula que no sean relevantes en la práctica.</p></li>
@@ -581,11 +577,11 @@ sean más robustas.</p></li>
 <div id="conclusión-1" class="section level3">
 <h3><strong>Conclusión:</strong></h3>
 <p>Cuando el tamaño de muestra es pequeño, las pruebas
-<strong>SFT</strong> o <strong>LT</strong> son mejores, ya que suelen
+<strong>SFT</strong> o <strong>AD</strong> son mejores, ya que suelen
 adaptarse mejor a escenarios con poca información. Para n grandes,
 aunque cualquier prueba sea efectiva, <strong>AD</strong> y
-<strong>CVMT</strong> podrían mostrar ventajas específicas dependiendo
-de la situación.</p>
+<strong>LT</strong> podrían mostrar ventajas específicas dependiendo de
+la situación.</p>
 <hr />
 <p><br></p>
 </div>
